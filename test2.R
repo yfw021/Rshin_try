@@ -92,18 +92,21 @@ server <- function(input, output) {
     return(projected_df)
   })
   
-  # Render the reactive data frame as an interactive table for Tab 1.
+  # Render the reactive data frame as an interactive table.
   output$capacity_table <- renderDT({
     datatable(projected_data(),
+              extensions = 'FixedColumns', # Enable the FixedColumns extension
               options = list(
-                scrollX = TRUE, # Allow horizontal scrolling for many columns
-                pageLength = 10 # Show 10 rows per page
+                scrollX = TRUE, # Allow horizontal scrolling
+                pageLength = 10,
+                # *** NEW: Freeze the first column on the left ***
+                fixedColumns = list(leftColumns = 1) 
               ),
               rownames = FALSE, # Hide row names
               class = 'cell-border stripe') # Add styling
   })
   
-  # Render the summary plot for Tab 2.
+  # Render the summary plot.
   output$capacity_plot <- renderPlot({
     
     # Get the processed data from our reactive expression.
@@ -113,7 +116,7 @@ server <- function(input, output) {
     start_year <- input$projection_years_slider[1]
     end_year <- input$projection_years_slider[2]
     year_cols <- as.character(start_year:end_year)
-    
+
     # Prepare data for plotting: calculate total capacity for each year.
     summary_data <- data_to_plot %>%
       # Select only the dynamic year columns.
@@ -127,7 +130,7 @@ server <- function(input, output) {
       tibble::rownames_to_column("Year") %>%
       # Ensure 'Year' is numeric for plotting.
       mutate(Year = as.numeric(Year))
-    
+
     # Create the plot using ggplot2.
     ggplot(summary_data, aes(x = Year, y = TotalCapacity)) +
       geom_col(fill = "#2c7fb8", alpha = 0.8) + # Bar chart with a nice blue color
@@ -141,8 +144,8 @@ server <- function(input, output) {
       # Improve the appearance of the x-axis labels.
       scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
       # Ensure the y-axis starts at 0.
-      scale_y_continuous(limits = c(0, max(summary_data$TotalCapacity) * 1.1))
-    
+      scale_y_continuous(limits = c(0, max(summary_data$TotalCapacity, na.rm = TRUE) * 1.1))
+      
   })
   
 }
@@ -150,4 +153,3 @@ server <- function(input, output) {
 # --- Run the Application ---
 # This command starts the Shiny web application.
 shinyApp(ui = ui, server = server)
-
