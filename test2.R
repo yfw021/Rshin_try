@@ -22,41 +22,76 @@ df <- data.frame(
 # Defines the layout and appearance of the web app.
 ui <- fluidPage(
   
-  # Add a title to the dashboard.
-  titlePanel("Machine Capacity Projection Dashboard"),
+  titlePanel("Machine Capacity Dashboard"),
   
-  # Use a sidebar layout for user inputs and main content.
-  sidebarLayout(
-    
-    # The sidebar panel is for input controls.
-    sidebarPanel(
-      h4("Controls"),
-      # Add a slider to let the user select the range of years.
-      # The default range is set from 2026 to 2040.
-      sliderInput("projection_years_slider",
-                  "Select Projection Year Range:",
-                  min = 2020,
-                  max = 2050,
-                  value = c(2026, 2040),
-                  sep = "") # Removes the comma from the year display
+  # Use a navlistPanel for left-side navigation.
+  navlistPanel(
+    well = TRUE, # Adds a gray background to the nav list for better visibility
+    widths = c(2, 10), # Sets column widths for nav (2/12) and content (10/12)
+
+    "Navigation", # A header for the navigation list
+
+    # --- Page 1: Introduction ---
+    tabPanel("Introduction",
+             # Use a jumbotron for a nice visual introduction
+             tags$div(class = "jumbotron",
+               tags$h1("Welcome to the Capacity Projection Tool", class = "display-4"),
+               tags$p("This interactive dashboard is designed to help you visualize and analyze machine capacity over time.", class = "lead"),
+               tags$hr(class = "my-4"),
+               tags$p("Navigate to the 'Dashboard' tab to get started. You can select a range of years to see the projected operational capacity for each machine, both in a detailed table and a summary plot."),
+               tags$a(class = "btn btn-primary btn-lg", href = "#", role = "button", "Learn more") # A dummy button for effect
+             ),
+             
+             # Add some more descriptive sections
+             fluidRow(
+               column(6,
+                 h3("How It Works"),
+                 p("The dashboard uses a simple logic: a machine's capacity is counted for a given year only if that year falls between its specified 'first year' and 'last year' of operation. Otherwise, its capacity is considered zero."),
+               ),
+               column(6,
+                 h3("Features"),
+                 tags$ul(
+                   tags$li("Interactive year selection with a slider."),
+                   tags$li("A summary plot showing total capacity across all machines."),
+                   tags$li("A detailed, searchable, and sortable data table."),
+                   tags$li("A fixed column in the table to easily identify machines when scrolling.")
+                 )
+               )
+             )
     ),
-    
-    # The main panel now displays the plot and table sequentially.
-    mainPanel(
-      # --- Section 1: Summary Plot ---
-      h3("Total Capacity Over Time"),
-      p("This plot shows the total available capacity across all machines for each year in the selected range."),
-      # Use plotOutput for the ggplot.
-      plotOutput("capacity_plot"),
-      
-      # Add a horizontal rule for visual separation.
-      hr(), 
-      
-      # --- Section 2: Detailed Table ---
-      h3("Projected Capacity Table"),
-      p("The table below shows the projected capacity for each machine. A value of '0' indicates the machine is not operational in that year."),
-      # Use DTOutput for an interactive table.
-      DTOutput("capacity_table")
+
+    # --- Page 2: The Main Dashboard ---
+    tabPanel("Dashboard",
+             # The sidebarLayout for the dashboard is now nested within the main content area.
+             sidebarLayout(
+               
+               # The sidebar panel is for input controls.
+               sidebarPanel(
+                 h4("Controls"),
+                 # Add a slider to let the user select the range of years.
+                 sliderInput("projection_years_slider",
+                             "Select Projection Year Range:",
+                             min = 2020,
+                             max = 2050,
+                             value = c(2026, 2040),
+                             sep = "") # Removes the comma from the year display
+               ),
+               
+               # The main panel now displays the plot and table sequentially.
+               mainPanel(
+                 # --- Section 1: Summary Plot ---
+                 h3("Total Capacity Over Time"),
+                 p("This plot shows the total available capacity across all machines for each year in the selected range."),
+                 plotOutput("capacity_plot"),
+                 
+                 hr(), 
+                 
+                 # --- Section 2: Detailed Table ---
+                 h3("Projected Capacity Table"),
+                 p("The table below shows the projected capacity for each machine. A value of '0' indicates the machine is not operational in that year."),
+                 DTOutput("capacity_table")
+               )
+             )
     )
   )
 )
@@ -73,67 +108,48 @@ server <- function(input, output) {
     start_year <- input$projection_years_slider[1]
     end_year <- input$projection_years_slider[2]
     
-    # Define the full range of years based on the slider.
     projection_years <- start_year:end_year
-    
-    # Start with the original dataframe.
     projected_df <- df
     
-    # Loop through each year in the selected range.
     for (year in projection_years) {
       col_name <- as.character(year)
-      
-      # Use the same logic as the original script to calculate capacity for the year.
       projected_df <- projected_df %>%
         mutate(!!col_name := ifelse(last_year >= year & first_year <= year, capacity, 0))
     }
-    
-    # Return the final projected data frame.
     return(projected_df)
   })
   
   # Render the reactive data frame as an interactive table.
   output$capacity_table <- renderDT({
     datatable(projected_data(),
-              extensions = 'FixedColumns', # Enable the FixedColumns extension
+              extensions = 'FixedColumns',
               options = list(
-                scrollX = TRUE, # Allow horizontal scrolling
+                scrollX = TRUE,
                 pageLength = 10,
-                # *** NEW: Freeze the first column on the left ***
                 fixedColumns = list(leftColumns = 1) 
               ),
-              rownames = FALSE, # Hide row names
-              class = 'cell-border stripe') # Add styling
+              rownames = FALSE,
+              class = 'cell-border stripe')
   })
   
   # Render the summary plot.
   output$capacity_plot <- renderPlot({
     
-    # Get the processed data from our reactive expression.
     data_to_plot <- projected_data()
-    
-    # Get the year range from the slider input.
     start_year <- input$projection_years_slider[1]
     end_year <- input$projection_years_slider[2]
     year_cols <- as.character(start_year:end_year)
 
-    # Prepare data for plotting: calculate total capacity for each year.
     summary_data <- data_to_plot %>%
-      # Select only the dynamic year columns.
       select(all_of(year_cols)) %>%
-      # Calculate the sum of each column (total capacity per year).
       colSums() %>%
-      # Convert the result to a data frame for ggplot.
       as.data.frame() %>%
       rename(TotalCapacity = ".") %>%
-      # Create a 'Year' column from the row names.
       tibble::rownames_to_column("Year") %>%
-      # Ensure 'Year' is numeric for plotting.
       mutate(Year = as.numeric(Year))
 
-    # Create the plot using ggplot2.
     ggplot(summary_data, aes(x = Year, y = TotalCapacity)) +
-      geom_col(fill = "#2c7fb8", alpha = 0.8) + # Bar chart with a nice blue color
+      geom_col(fill = "#2c7fb8", alpha = 0.8) +
       geom_text(aes(label = TotalCapacity), vjust = -0.5, color = "black", size = 4) +
       labs(
         title = "Total Projected Capacity by Year",
@@ -141,15 +157,10 @@ server <- function(input, output) {
         y = "Total Capacity"
       ) +
       theme_minimal(base_size = 14) +
-      # Improve the appearance of the x-axis labels.
       scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
-      # Ensure the y-axis starts at 0.
       scale_y_continuous(limits = c(0, max(summary_data$TotalCapacity, na.rm = TRUE) * 1.1))
-      
   })
-  
 }
 
 # --- Run the Application ---
-# This command starts the Shiny web application.
 shinyApp(ui = ui, server = server)
