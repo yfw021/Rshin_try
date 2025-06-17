@@ -11,14 +11,14 @@ library(jsonlite)  # For handling JSON data
 library(tidyr)     # For reshaping data for the plot
 
 # --- Sample Data ---
-# Added a "type" column to the data frame.
+# Updated column names: Capacity, First_year, Last_Year
 df <- data.frame(
   stringsAsFactors = FALSE,
   machine = c("Machine A", "Machine B", "Machine C", "Machine D"),
-  type = c("Type A", "Type A", "Type B", "Type B"), # NEW: Machine type feature
-  capacity = c(100, 150, 120, 200),
-  first_year = c(2010, 2015, 2020, 2027),
-  last_year = c(2025, 2030, 2035, 2040)
+  type = c("Type A", "Type A", "Type B", "Type B"),
+  Capacity = c(100, 150, 120, 200),
+  First_year = c(2010, 2015, 2020, 2027),
+  Last_Year = c(2025, 2030, 2035, 2040)
 )
 
 # --- User Interface (UI) ---
@@ -30,19 +30,19 @@ ui <- fluidPage(
   navlistPanel(
     well = TRUE, 
     widths = c(2, 10),
-    
+
     "Navigation", 
-    
+
     # --- Page 1: Introduction ---
     tabPanel("Introduction",
              tags$div(class = "jumbotron",
-                      tags$h1("Welcome to the Capacity Projection Tool", class = "display-4"),
-                      tags$p("This interactive dashboard is designed to help you visualize and analyze machine capacity over time.", class = "lead"),
-                      tags$hr(class = "my-4"),
-                      tags$p("Navigate to the 'Dashboard' tab to get started. Use the AI Assistant to ask questions about the data shown.")
+               tags$h1("Welcome to the Capacity Projection Tool", class = "display-4"),
+               tags$p("This interactive dashboard is designed to help you visualize and analyze machine capacity over time.", class = "lead"),
+               tags$hr(class = "my-4"),
+               tags$p("Navigate to the 'Dashboard' tab to get started. Use the AI Assistant to ask questions about the data shown.")
              )
     ),
-    
+
     # --- Page 2: The Main Dashboard ---
     tabPanel("Dashboard",
              sidebarLayout(
@@ -94,8 +94,9 @@ server <- function(input, output, session) {
     projected_df <- df
     for (year in projection_years) {
       col_name <- as.character(year)
+      # --- UPDATED: Using new column names ---
       projected_df <- projected_df %>%
-        mutate(!!col_name := ifelse(last_year >= year & first_year <= year, capacity, 0))
+        mutate(!!col_name := ifelse(Last_Year >= year & First_year <= year, Capacity, 0))
     }
     # Reorder columns to have type next to machine for clarity
     projected_df %>% select(machine, type, everything())
@@ -123,12 +124,12 @@ server <- function(input, output, session) {
       group_by(Year, type) %>%
       summarise(TotalCapacity = sum(Capacity, na.rm = TRUE), .groups = 'drop') %>%
       mutate(Year = as.numeric(Year))
-    
+      
     # Calculate totals for labels on top of bars
     total_labels <- summary_data %>%
       group_by(Year) %>%
       summarise(TotalLabel = sum(TotalCapacity, na.rm = TRUE))
-    
+
     # Create the stacked bar plot
     ggplot(summary_data, aes(x = Year, y = TotalCapacity, fill = type)) +
       geom_col(position = "stack") +
@@ -151,7 +152,7 @@ server <- function(input, output, session) {
       scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
       scale_y_continuous(limits = c(0, max(total_labels$TotalLabel, na.rm = TRUE) * 1.15)) # Adjust y-axis for labels
   })
-  
+
   # --- AI Assistant Server Logic (Unchanged) ---
   assistant_response <- reactiveVal("Awaiting your question...")
   observeEvent(input$ask_button, {
