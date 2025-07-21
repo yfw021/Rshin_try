@@ -72,5 +72,21 @@ long_data <- wide_data %>%
   mutate(Years = as.integer(Years)) # (Optional but good practice) Converts the Years column to a number
 
 # Print the new long-format table
+
+
+
+updated_table <- main_data %>%
+  # Perform a left join to bring in the new values
+  left_join(long_data, by = c("Generation", "Year")) %>%
+  
+  # Use coalesce to update the main 'Value' column.
+  # It takes the new value (Value.y) if it exists, otherwise it keeps the old one (Value.x).
+  mutate(Value = coalesce(Value.y, Value.x)) %>%
+  
+  # Clean up the extra columns created by the join
+  select(-Value.x, -Value.y)
+
+# Print the final, updated table
+print(updated_table)
 print(long_data)
 
