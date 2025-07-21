@@ -62,3 +62,15 @@ compare(
 )
 
 
+
+long_data <- wide_data %>%
+  pivot_longer(
+    cols = -`generation resources`, # Gathers all columns EXCEPT 'generation resources'
+    names_to = "Years",             # Creates the new 'Years' column from the old column names
+    values_to = "Value"             # Creates a 'Value' column to hold the cell values
+  ) %>%
+  mutate(Years = as.integer(Years)) # (Optional but good practice) Converts the Years column to a number
+
+# Print the new long-format table
+print(long_data)
+
