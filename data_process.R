@@ -75,18 +75,20 @@ long_data <- wide_data %>%
 
 
 
-updated_table <- main_data %>%
-  # Perform a left join to bring in the new values
-  left_join(long_data, by = c("Generation", "Year")) %>%
-  
-  # Use coalesce to update the main 'Value' column.
-  # It takes the new value (Value.y) if it exists, otherwise it keeps the old one (Value.x).
-  mutate(Value = coalesce(Value.y, Value.x)) %>%
-  
-  # Clean up the extra columns created by the join
-  select(-Value.x, -Value.y)
+# Step 1: Ensure the column exists in df2.
+# If it doesn't exist, this line adds it and fills it with NA.
+# If it already exists, this line won't cause any problems.
+if (!"projected_capacity" %in% names(df2)) {
+  df2$projected_capacity <- NA_real_
+}
 
-# Print the final, updated table
-print(updated_table)
-print(long_data)
+# Step 2: Update df2 with values from df1 based on the keys
+updated_df2 <- rows_update(
+  df2,
+  df1,
+  by = c("Generation_Resources", "Years")
+)
+
+# Print a sample of the updated table
+print(head(updated_df2, 10))
 
