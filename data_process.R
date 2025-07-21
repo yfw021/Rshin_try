@@ -30,3 +30,25 @@ print(final_table)
 
 
 
+
+final_table_summed <- your_data_frame %>%
+  # Step 1: Create the 'LR_ID' column
+  mutate(LR_ID = str_extract(L_R_Summary, "\\d+\\.\\d+")) %>%
+
+  # Step 2: Group by the ID and the Year
+  group_by(LR_ID, Years) %>%
+
+  # Step 3: Calculate the sum for each group and name it TX_Code_sum
+  summarise(TX_Code_sum = sum(TX_LR_sum, na.rm = TRUE), .groups = 'drop') %>%
+
+  # Step 4: Reshape the summarized data into the final table
+  pivot_wider(
+    id_cols = LR_ID,
+    names_from = Years,
+    values_from = TX_Code_sum
+  )
+
+# Print the final table with the summed values
+print(final_table_summed)
+
+
