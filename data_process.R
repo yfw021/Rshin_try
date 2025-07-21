@@ -28,49 +28,6 @@ final_table <- your_data_frame %>%
 # Print the final table
 print(final_table)
 
-
-
-
-# Compare the two data frames after rounding all numeric columns to 0 decimal places
-compare(
-  table_original %>%
-    select(-LR_ID) %>%
-    mutate(across(where(is.numeric), ~round(.x, digits = 0))),
-
-  table_new %>%
-    select(-LR_ID) %>%
-    mutate(across(where(is.numeric), ~round(.x, digits = 0)))
-)
-
-
-
-# Compare the two data frames after rounding all numeric columns to 0 decimal places
-compare(
-  table_original %>%
-    select(-LR_ID) %>%
-    mutate(across(where(is.numeric), ~round(.x, digits = 0))),
-
-  table_new %>%
-    select(-LR_ID) %>%
-    mutate(across(where(is.numeric), ~round(.x, digits = 0)))
-)
-
-
-
-# Compare the two data frames after rounding all numeric columns to 0 decimal places
-compare(
-  table_original %>%
-    select(-LR_ID) %>%
-    mutate(across(where(is.numeric), ~round(.x, digits = 0))),
-
-  table_new %>%
-    select(-LR_ID) %>%
-    mutate(across(where(is.numeric), ~round(.x, digits = 0)))
-)
-
-
-
-
 final_table_summed <- your_data_frame %>%
   # Step 1: Create the 'LR_ID' column
   mutate(LR_ID = str_extract(L_R_Summary, "\\d+\\.\\d+")) %>%
@@ -90,5 +47,18 @@ final_table_summed <- your_data_frame %>%
 
 # Print the final table with the summed values
 print(final_table_summed)
+
+
+
+# Compare the two data frames after rounding all numeric columns to 0 decimal places
+compare(
+  table_original %>%
+    select(-LR_ID) %>%
+    mutate(across(where(is.numeric), ~round(.x, digits = 0))),
+
+  table_new %>%
+    select(-LR_ID) %>%
+    mutate(across(where(is.numeric), ~round(.x, digits = 0)))
+)
 
 
