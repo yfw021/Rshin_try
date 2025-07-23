@@ -94,9 +94,12 @@ print(head(updated_df2, 10))
 
 
 
-texas_capacity_summary <- df %>%
+texas_capacity_summary_non_generic <- df %>%
+  # ADDED: Filter for records where Generic_resources is 0
+  filter(Generic_resources == 0) %>%
+
   group_by(Years, type) %>%
-  # NEW LOGIC: Conditionally sum different columns based on the 'type'
+  # Conditionally sum different columns based on the 'type'
   summarise(
     total_tx_capacity = case_when(
       type[1] == 'btmsolar' ~ sum(Alloc_capa_TX_btnsolar, na.rm = TRUE),
@@ -114,6 +117,5 @@ texas_capacity_summary <- df %>%
   mutate(across(where(is.numeric), round, 2))
 
 
-# --- Step 3: Display the final Texas-specific table ---
-print(texas_capacity_summary)
-
+# --- Step 3: Display the final Texas-specific, non-generic table ---
+print(texas_capacity_summary_non_generic)
