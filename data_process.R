@@ -94,21 +94,26 @@ print(head(updated_df2, 10))
 
 
 
-# --- Step 2: Create the summary table ---
-
-# Group by year and type, sum the capacity, then pivot to the desired format
-capacity_summary_table <- df %>%
-  # Group by the columns we want to aggregate
+texas_capacity_summary <- df %>%
   group_by(Years, type) %>%
-  # Calculate the total capacity for each group
-  summarise(total_capacity = sum(projected_capacity), .groups = 'drop') %>%
-  # Pivot the data to a wide format
+  # NEW LOGIC: Conditionally sum different columns based on the 'type'
+  summarise(
+    total_tx_capacity = case_when(
+      type[1] == 'btmsolar' ~ sum(Alloc_capa_TX_btnsolar, na.rm = TRUE),
+      TRUE                  ~ sum(Alloc_cata_TX, na.rm = TRUE)
+    ),
+    .groups = 'drop'
+  ) %>%
+  # Pivot the data to the final wide format
   pivot_wider(
     names_from = Years,
-    values_from = total_capacity,
-    values_fill = 0 # If a type has no capacity in a year, show 0
-  )
+    values_from = total_tx_capacity,
+    values_fill = 0
+  ) %>%
+  # Round the final capacity values for cleaner display
+  mutate(across(where(is.numeric), round, 2))
 
-# --- Step 3: Display the final table ---
-print(capacity_summary_table)
+
+# --- Step 3: Display the final Texas-specific table ---
+print(texas_capacity_summary)
 
