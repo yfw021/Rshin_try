@@ -92,3 +92,23 @@ updated_df2 <- rows_update(
 # Print a sample of the updated table
 print(head(updated_df2, 10))
 
+
+
+# --- Step 2: Create the summary table ---
+
+# Group by year and type, sum the capacity, then pivot to the desired format
+capacity_summary_table <- df %>%
+  # Group by the columns we want to aggregate
+  group_by(Years, type) %>%
+  # Calculate the total capacity for each group
+  summarise(total_capacity = sum(projected_capacity), .groups = 'drop') %>%
+  # Pivot the data to a wide format
+  pivot_wider(
+    names_from = Years,
+    values_from = total_capacity,
+    values_fill = 0 # If a type has no capacity in a year, show 0
+  )
+
+# --- Step 3: Display the final table ---
+print(capacity_summary_table)
+
