@@ -1,0 +1,22 @@
+summary_table <- df %>%
+  group_by(`Short Name`) %>%
+  summarise(
+    `2026` = sum(`2026`, na.rm = TRUE),
+    `2027` = sum(`2027`, na.rm = TRUE),
+    `2028` = sum(`2028`, na.rm = TRUE),
+    `2029` = sum(`2029`, na.rm = TRUE),
+    `2030` = sum(`2030`, na.rm = TRUE)
+  )
+
+# An alternative and more scalable way using across()
+summary_table_across <- df %>%
+  group_by(`Short Name`) %>%
+  summarise(across(`2026`:`2030`, sum, na.rm = TRUE))
+
+
+# Print the resulting summary table to the console.
+print("Summary Table:")
+print(summary_table)
+
+print("\nSummary Table (using across):")
+print(summary_table_across)
